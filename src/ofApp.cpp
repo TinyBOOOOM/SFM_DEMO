@@ -13,6 +13,7 @@ void ofApp::setup(){
 		_image_now.setFromPixels(_video.getPixelsRef());
 		_image_before = _image_now;
 		_image_draw = _image_now;
+		_im = _image_now;
 	}
 	t_now = clock();
 	t_before = t_now;
@@ -36,9 +37,14 @@ void ofApp::update(){
 	_video.update();
 	if (_video.isPlaying())
 	{
+		if (_video.isFrameNew())
+		{
+			_im.setFromPixels(_video.getPixelsRef());
+		}
 		t_now = clock();
 		if (t_now - t_before >= 5000)
 		{
+			clock_t _start = clock();
 			_video.setPaused(true);
 			_image_before = _image_now;
 			_image_now.setFromPixels(_video.getPixelsRef());
@@ -70,8 +76,9 @@ void ofApp::update(){
 			int (*match_buf)[2] = new int[num1][2];
 			//use the default thresholds. Check the declaration in SiftGPU.h
 			int num_match = mSiftMatcher.GetSiftMatch(num1, match_buf);
-			std::cout << num_match << " sift matches were found;\n";
-
+			cout << num_match << " sift matches were found;\n";
+			clock_t _end = clock();
+			cout << _end - _start << "ms;\n";
 			glfwMakeContextCurrent(draw_window);
 			t_before = clock();
 			_video.setPaused(false);
@@ -83,7 +90,7 @@ void ofApp::update(){
 void ofApp::draw(){
 
 	glColor3f(1,1,1);
-	_video.draw(0,0,_w,_h);
+	_im.draw(0,0,_w,_h);
 
 	if (_image_before.isAllocated())
 	{
