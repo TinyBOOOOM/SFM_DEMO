@@ -12,7 +12,8 @@ void ofApp::setup(){
 		_video.play();
 		_image_now.setFromPixels(_video.getPixelsRef());
 		_image_before = _image_now;
-		_image_draw = _image_now;
+		_image_draw_now = _image_now;
+		_image_draw_before = _image_now;
 		_im = _image_now;
 	}
 	t_now = clock();
@@ -31,6 +32,17 @@ void ofApp::setup(){
 
 }
 
+vector<cv::KeyPoint> transKeyPointsFromGPUtoCV(vector<SiftGPU::SiftKeypoint>* _input)
+{
+	vector<cv::KeyPoint> _output;
+	for (int i = 0; i < _input->size(); i++)
+	{
+		cv::KeyPoint _kp((*_input)[i].x, (*_input)[i].y, (*_input)[i].s, (*_input)[i].o);
+		_output.push_back(_kp);
+	}
+	return _output;
+}
+
 //--------------------------------------------------------------
 void ofApp::update(){
 
@@ -46,12 +58,15 @@ void ofApp::update(){
 				_video.setPaused(true);
 
 				_image_before = _image_now;
+				_image_draw_before = _image_before;
 				_image_now.setFromPixels(_video.getPixelsRef());
+				_image_draw_now = _image_now;
 				//_image_draw = _image_now;
 
 				glfwMakeContextCurrent(sift_window);
 				vector<float > descriptors1(1), descriptors2(1);
-				vector<SiftGPU::SiftKeypoint> keys1(1), keys2(1);    
+				vector<SiftGPU::SiftKeypoint> keys1(1), keys2(1);
+				vector<cv::KeyPoint> cvkeypoint1,cvkeypoint2;
 				int num1 = 0, num2 = 0;
 
 				if(mSift.RunSIFT(1920, 1080, _image_before.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
@@ -59,6 +74,7 @@ void ofApp::update(){
 					num1 = mSift.GetFeatureNum();
 					keys1.resize(num1);    descriptors1.resize(128*num1);
 					mSift.GetFeatureVector(&keys1[0], &descriptors1[0]);
+					//cvkeypoint1 = transKeyPointsFromGPUtoCV(&keys1);
 				}
 
 				if(mSift.RunSIFT(1920, 1080, _image_now.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
@@ -66,6 +82,7 @@ void ofApp::update(){
 					num2 = mSift.GetFeatureNum();
 					keys2.resize(num2);    descriptors2.resize(128*num2);
 					mSift.GetFeatureVector(&keys2[0], &descriptors2[0]);
+					//cvkeypoint2 = transKeyPointsFromGPUtoCV(&keys2);
 				}
 
 				clock_t _startmatch = clock();
@@ -81,12 +98,22 @@ void ofApp::update(){
 				cout << num_match << " sift matches were found in " << _endmatch - _startmatch << "ms;\n";		
 				cout << "Cost " << _endmatch - _startall << "ms " << "in sift and match.\n\n";
 
+				for(int i  = 0; i < num_match; ++i)
+				{
+					SiftGPU::SiftKeypoint & key1 = keys1[match_buf[i][0]];
+					cvkeypoint1.push_back(cv::KeyPoint(key1.x, key1.y, key1.s, key1.o));
+					SiftGPU::SiftKeypoint & key2 = keys2[match_buf[i][1]];
+					cvkeypoint2.push_back(cv::KeyPoint(key2.x, key2.y, key2.s, key2.o));
+				}
+
+				cv::drawKeypoints((cv::Mat)_image_before.getCvImage(), cvkeypoint1, (cv::Mat)_image_draw_before.getCvImage());
+				cv::drawKeypoints((cv::Mat)_image_now.getCvImage(), cvkeypoint2, (cv::Mat)_image_draw_now.getCvImage());
+
 				glfwMakeContextCurrent(draw_window);
 				t_before = clock();
 
 				_video.setPaused(false);
 			}
-
 		}
 	}
 }
@@ -94,16 +121,21 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 
-	glColor3f(1,1,1);
-	_video.draw(0,0,_w,_h);
+	glColor3f(1, 1, 1);
+	_video.draw(0, 0, _w, _h);
 
-	if (_image_before.isAllocated())
+	if (_image_draw_now.isAllocated())
 	{
-		_image_before.draw(0,_h,_w,_h);
+		_image_draw_now.draw(0, _h, _w, _h);
+		glColor3f(0, 1, 1);
+		ofDrawBitmapString("now", 20, _h + 20);
 	}
-	if (_image_now.isAllocated())
+	if (_image_draw_before.isAllocated())
 	{
-		_image_now.draw(_w,0,_w,_h);
+		glColor3f(1, 1, 1);
+		_image_draw_before.draw(_w,0,_w,_h);
+		glColor3f(0, 1, 1);
+		ofDrawBitmapString("before", _w + 20, 20);
 	}
 
 	glColor3f(0,1,1);
@@ -115,7 +147,10 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-	
+	if (key == 's')
+	{
+		_video.setPaused(!_video.isPaused());
+	}
 }
 
 //--------------------------------------------------------------
