@@ -33,57 +33,60 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	
+
 	_video.update();
 	if (_video.isPlaying())
-	{
-// 		if (_video.isFrameNew())
-// 		{
-// 			//_im.setFromPixels(_video.getPixelsRef());
-// 		}
-		t_now = clock();
-		if (t_now - t_before >= 5000)
+	{ 		
+		if (_video.isFrameNew())
 		{
-			clock_t _start = clock();
-			_video.setPaused(true);
-
-			_image_before = _image_now;
-			_image_now.setFromPixels(_video.getPixelsRef());
-			//_image_draw = _image_now;
-
-			glfwMakeContextCurrent(sift_window);
-			vector<float > descriptors1(1), descriptors2(1);
-			vector<SiftGPU::SiftKeypoint> keys1(1), keys2(1);    
-			int num1 = 0, num2 = 0;
-
-			if(mSift.RunSIFT(1920, 1080, _image_before.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
+			t_now = clock();
+			if (t_now - t_before >= 5000)
 			{
-				num1 = mSift.GetFeatureNum();
-				keys1.resize(num1);    descriptors1.resize(128*num1);
-				mSift.GetFeatureVector(&keys1[0], &descriptors1[0]);
+				clock_t _startall = clock();
+				_video.setPaused(true);
+
+				_image_before = _image_now;
+				_image_now.setFromPixels(_video.getPixelsRef());
+				//_image_draw = _image_now;
+
+				glfwMakeContextCurrent(sift_window);
+				vector<float > descriptors1(1), descriptors2(1);
+				vector<SiftGPU::SiftKeypoint> keys1(1), keys2(1);    
+				int num1 = 0, num2 = 0;
+
+				if(mSift.RunSIFT(1920, 1080, _image_before.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
+				{
+					num1 = mSift.GetFeatureNum();
+					keys1.resize(num1);    descriptors1.resize(128*num1);
+					mSift.GetFeatureVector(&keys1[0], &descriptors1[0]);
+				}
+
+				if(mSift.RunSIFT(1920, 1080, _image_now.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
+				{
+					num2 = mSift.GetFeatureNum();
+					keys2.resize(num2);    descriptors2.resize(128*num2);
+					mSift.GetFeatureVector(&keys2[0], &descriptors2[0]);
+				}
+
+				clock_t _startmatch = clock();
+
+				mSiftMatcher.SetDescriptors(0, num1, &descriptors1[0]); //image 1
+				mSiftMatcher.SetDescriptors(1, num2, &descriptors2[0]); //image 2
+ 
+				int (*match_buf)[2] = new int[num1][2];
+				int num_match = mSiftMatcher.GetSiftMatch(num1, match_buf);
+
+				clock_t _endmatch = clock();
+
+				cout << num_match << " sift matches were found in " << _endmatch - _startmatch << "ms;\n";		
+				cout << "Cost " << _endmatch - _startall << "ms " << "in sift and match.\n\n";
+
+				glfwMakeContextCurrent(draw_window);
+				t_before = clock();
+
+				_video.setPaused(false);
 			}
 
-			if(mSift.RunSIFT(1920, 1080, _image_now.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
-			{
-				num2 = mSift.GetFeatureNum();
-				keys2.resize(num2);    descriptors2.resize(128*num2);
-				mSift.GetFeatureVector(&keys2[0], &descriptors2[0]);
-			}
-
-			mSiftMatcher.SetDescriptors(0, num1, &descriptors1[0]); //image 1
-			mSiftMatcher.SetDescriptors(1, num2, &descriptors2[0]); //image 2
-
-			//match and get result.    
-			int (*match_buf)[2] = new int[num1][2];
-			//use the default thresholds. Check the declaration in SiftGPU.h
-			int num_match = mSiftMatcher.GetSiftMatch(num1, match_buf);
-			cout << num_match << " sift matches were found;\n";
-			clock_t _end = clock();
-			cout << _end - _start << "ms;\n";
-			glfwMakeContextCurrent(draw_window);
-			t_before = clock();
-			
-			_video.setPaused(false);
 		}
 	}
 }
