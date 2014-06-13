@@ -53,11 +53,7 @@ void ofApp::update(){
 		if (_video.isFrameNew())
 		{
 			t_now = clock();
-<<<<<<< HEAD
-			if (t_now - t_before >= 500)
-=======
 			if (t_now - t_before >= 5000)
->>>>>>> parent of 8dfa1a5... 获取F-M和H-M矩阵
 			{
 				clock_t _startall = clock();
 				_video.setPaused(true);
@@ -96,22 +92,23 @@ void ofApp::update(){
 				mSiftMatcher.SetDescriptors(1, num2, &descriptors2[0]); //image 2
  
 				int (*match_buf)[2] = new int[num1][2];
-				int num_match = 0;
 
-				if (*F[0] != NULL && *H[0] != NULL)
-				{
-					num_match = mSiftMatcher.GetGuidedSiftMatch(num1, match_buf, H,NULL);
-				}
-				else
-				{
-					num_match = mSiftMatcher.GetSiftMatch(num1, match_buf);
-				}
+				int num_match = mSiftMatcher.GetSiftMatch(num1, match_buf);
 				
-
 				clock_t _endmatch = clock();
 
 				cout << num_match << " sift matches were found in " << _endmatch - _startmatch << "ms;\n";		
 				cout << "Cost " << _endmatch - _startall << "ms " << "in sift and match.\n\n";
+
+				CvMat* points1;
+				CvMat* points2;
+				CvMat* fundMatr;
+				CvMat* homoMatr;
+
+				points1 = cvCreateMat(2,num_match,CV_32F);
+				points2 = cvCreateMat(2,num_match,CV_32F);
+				fundMatr = cvCreateMat(3,3,CV_32F);
+				homoMatr = cvCreateMat(3,3,CV_32F);
 
 				for(int i  = 0; i < num_match; ++i)
 				{
@@ -121,35 +118,35 @@ void ofApp::update(){
 					cvkeypoint2.push_back(cv::KeyPoint(key2.x, key2.y, key2.s, key2.o));
 				}
 
-<<<<<<< HEAD
 				int num_fm = cvFindFundamentalMat(points1,points2,fundMatr,CV_RANSAC);
 				int num_hm = cvFindHomography(points1, points2, homoMatr);
-				cout<<"F-M:\n";
 
+				cout<<"F-M:\n";
 				for (int i = 0; i < 9; i = i+3)
 				{
 					cout<<fundMatr->data.fl[i]
 					<<" , "<<fundMatr->data.fl[i+1]
 					<<" , "<<fundMatr->data.fl[i+2]<<endl;
-					if (*H[0] == NULL)
-					{
-						F[i/3][0] = fundMatr->data.fl[i];
-						F[i/3][1] = fundMatr->data.fl[i+1];
-						F[i/3][2] = fundMatr->data.fl[i+2];
-					}
+// 					if (*H[0] == NULL)
+// 					{
+// 						F[i/3][0] = fundMatr->data.fl[i];
+// 						F[i/3][1] = fundMatr->data.fl[i+1];
+// 						F[i/3][2] = fundMatr->data.fl[i+2];
+// 					}
 				}
+
 				cout<<"H-M:\n";
 				for (int i = 0; i < 9; i = i+3)
 				{
 					cout<<homoMatr->data.fl[i]
 					<<" , "<<homoMatr->data.fl[i+1]
 					<<" , "<<homoMatr->data.fl[i+2]<<endl;
-					if (*H[0] == NULL)
-					{
-						H[i/3][0] = homoMatr->data.fl[i];
-						H[i/3][1] = homoMatr->data.fl[i+1];
-						H[i/3][2] = homoMatr->data.fl[i+2];
-					}
+// 					if (*H[0] == NULL)
+// 					{
+// 						H[i/3][0] = homoMatr->data.fl[i];
+// 						H[i/3][1] = homoMatr->data.fl[i+1];
+// 						H[i/3][2] = homoMatr->data.fl[i+2];
+// 					}
 				}
 
 				cvReleaseMat(&points1);
@@ -157,8 +154,6 @@ void ofApp::update(){
 				cvReleaseMat(&fundMatr);
 				cvReleaseMat(&homoMatr);
 
-=======
->>>>>>> parent of 8dfa1a5... 获取F-M和H-M矩阵
 				cv::drawKeypoints((cv::Mat)_image_before.getCvImage(), cvkeypoint1, (cv::Mat)_image_draw_before.getCvImage());
 				cv::drawKeypoints((cv::Mat)_image_now.getCvImage(), cvkeypoint2, (cv::Mat)_image_draw_now.getCvImage());
 
