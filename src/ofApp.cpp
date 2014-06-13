@@ -53,7 +53,11 @@ void ofApp::update(){
 		if (_video.isFrameNew())
 		{
 			t_now = clock();
+<<<<<<< HEAD
 			if (t_now - t_before >= 500)
+=======
+			if (t_now - t_before >= 5000)
+>>>>>>> parent of 8dfa1a5... 获取F-M和H-M矩阵
 			{
 				clock_t _startall = clock();
 				_video.setPaused(true);
@@ -109,30 +113,15 @@ void ofApp::update(){
 				cout << num_match << " sift matches were found in " << _endmatch - _startmatch << "ms;\n";		
 				cout << "Cost " << _endmatch - _startall << "ms " << "in sift and match.\n\n";
 
-				CvMat* points1;
-				CvMat* points2;
-				CvMat* fundMatr;
-				CvMat* homoMatr;
-
-				points1 = cvCreateMat(2,num_match,CV_32F);
-				points2 = cvCreateMat(2,num_match,CV_32F);
-				fundMatr = cvCreateMat(3,3,CV_32F);
-				homoMatr = cvCreateMat(3,3,CV_32F);
-
 				for(int i  = 0; i < num_match; ++i)
 				{
 					SiftGPU::SiftKeypoint & key1 = keys1[match_buf[i][0]];
-					SiftGPU::SiftKeypoint & key2 = keys2[match_buf[i][1]];
-
-					cvmSet(points1,0 ,i , key1.x);
-					cvmSet(points1,1 ,i , key1.y);
-					cvmSet(points2,0 ,i , key2.x);
-					cvmSet(points2,1 ,i , key2.y);
-
 					cvkeypoint1.push_back(cv::KeyPoint(key1.x, key1.y, key1.s, key1.o));
+					SiftGPU::SiftKeypoint & key2 = keys2[match_buf[i][1]];
 					cvkeypoint2.push_back(cv::KeyPoint(key2.x, key2.y, key2.s, key2.o));
 				}
 
+<<<<<<< HEAD
 				int num_fm = cvFindFundamentalMat(points1,points2,fundMatr,CV_RANSAC);
 				int num_hm = cvFindHomography(points1, points2, homoMatr);
 				cout<<"F-M:\n";
@@ -168,6 +157,8 @@ void ofApp::update(){
 				cvReleaseMat(&fundMatr);
 				cvReleaseMat(&homoMatr);
 
+=======
+>>>>>>> parent of 8dfa1a5... 获取F-M和H-M矩阵
 				cv::drawKeypoints((cv::Mat)_image_before.getCvImage(), cvkeypoint1, (cv::Mat)_image_draw_before.getCvImage());
 				cv::drawKeypoints((cv::Mat)_image_now.getCvImage(), cvkeypoint2, (cv::Mat)_image_draw_now.getCvImage());
 
