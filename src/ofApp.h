@@ -43,4 +43,7 @@ class ofApp : public ofBaseApp{
 
 		SiftGPU mSift;
 		SiftMatchGPU mSiftMatcher;
+
+		float F[3][3];
+		float H[3][3];
 };

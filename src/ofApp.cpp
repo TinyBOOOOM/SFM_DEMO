@@ -28,7 +28,8 @@ void ofApp::setup(){
 	mSift.VerifyContextGL();
 	mSiftMatcher.VerifyContextGL();
 	glfwMakeContextCurrent(draw_window);
-	cv::KeyPoint aaa();
+
+	*F[0] = NULL;*H[0] = NULL;
 
 }
 
@@ -52,7 +53,7 @@ void ofApp::update(){
 		if (_video.isFrameNew())
 		{
 			t_now = clock();
-			if (t_now - t_before >= 3000)
+			if (t_now - t_before >= 500)
 			{
 				clock_t _startall = clock();
 				_video.setPaused(true);
@@ -91,7 +92,17 @@ void ofApp::update(){
 				mSiftMatcher.SetDescriptors(1, num2, &descriptors2[0]); //image 2
  
 				int (*match_buf)[2] = new int[num1][2];
-				int num_match = mSiftMatcher.GetSiftMatch(num1, match_buf);
+				int num_match = 0;
+
+				if (*F[0] != NULL && *H[0] != NULL)
+				{
+					num_match = mSiftMatcher.GetGuidedSiftMatch(num1, match_buf, H,NULL);
+				}
+				else
+				{
+					num_match = mSiftMatcher.GetSiftMatch(num1, match_buf);
+				}
+				
 
 				clock_t _endmatch = clock();
 
@@ -125,11 +136,18 @@ void ofApp::update(){
 				int num_fm = cvFindFundamentalMat(points1,points2,fundMatr,CV_RANSAC);
 				int num_hm = cvFindHomography(points1, points2, homoMatr);
 				cout<<"F-M:\n";
+
 				for (int i = 0; i < 9; i = i+3)
 				{
 					cout<<fundMatr->data.fl[i]
 					<<" , "<<fundMatr->data.fl[i+1]
 					<<" , "<<fundMatr->data.fl[i+2]<<endl;
+					if (*H[0] == NULL)
+					{
+						F[i/3][0] = fundMatr->data.fl[i];
+						F[i/3][1] = fundMatr->data.fl[i+1];
+						F[i/3][2] = fundMatr->data.fl[i+2];
+					}
 				}
 				cout<<"H-M:\n";
 				for (int i = 0; i < 9; i = i+3)
@@ -137,11 +155,19 @@ void ofApp::update(){
 					cout<<homoMatr->data.fl[i]
 					<<" , "<<homoMatr->data.fl[i+1]
 					<<" , "<<homoMatr->data.fl[i+2]<<endl;
+					if (*H[0] == NULL)
+					{
+						H[i/3][0] = homoMatr->data.fl[i];
+						H[i/3][1] = homoMatr->data.fl[i+1];
+						H[i/3][2] = homoMatr->data.fl[i+2];
+					}
 				}
+
 				cvReleaseMat(&points1);
 				cvReleaseMat(&points2);
 				cvReleaseMat(&fundMatr);
 				cvReleaseMat(&homoMatr);
+
 				cv::drawKeypoints((cv::Mat)_image_before.getCvImage(), cvkeypoint1, (cv::Mat)_image_draw_before.getCvImage());
 				cv::drawKeypoints((cv::Mat)_image_now.getCvImage(), cvkeypoint2, (cv::Mat)_image_draw_now.getCvImage());
 
