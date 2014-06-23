@@ -170,18 +170,18 @@ void ofApp::update(){
 void ofApp::draw(){
 
 	glColor3f(1, 1, 1);
-	_video.draw(0, 0/*, _w, _h*/);
+	_video.draw(0, 0, _w, _h);
 
 	if (_image_draw_now.isAllocated())
 	{
-		_image_draw_now.draw(0, _h/*, _w, _h*/);
+		_image_draw_now.draw(0, _h, _w, _h);
 		glColor3f(0, 1, 1);
 		ofDrawBitmapString("now", 20, _h + 20);
 	}
 	if (_image_draw_before.isAllocated())
 	{
 		glColor3f(1, 1, 1);
-		_image_draw_before.draw(_w,0/*,_w,_h*/);
+		_image_draw_before.draw(_w,0,_w,_h);
 		glColor3f(0, 1, 1);
 		ofDrawBitmapString("before", _w + 20, 20);
 	}
