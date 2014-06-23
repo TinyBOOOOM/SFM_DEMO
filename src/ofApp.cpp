@@ -35,11 +35,11 @@ void ofApp::setup(){
 
 vector<cv::KeyPoint> transKeyPointsFromGPUtoCV(vector<SiftGPU::SiftKeypoint>* _input)
 {
-	vector<cv::KeyPoint> _output;
-	for (int i = 0; i < _input->size(); i++)
+	vector<cv::KeyPoint> _output(_input->size());
+	for (size_t i = 0; i < _input->size(); i++)
 	{
 		cv::KeyPoint _kp((*_input)[i].x, (*_input)[i].y, (*_input)[i].s, (*_input)[i].o);
-		_output.push_back(_kp);
+		_output[i] = (_kp);
 	}
 	return _output;
 }
@@ -53,7 +53,7 @@ void ofApp::update(){
 		if (_video.isFrameNew())
 		{
 			t_now = clock();
-			if (t_now - t_before >= 5000)
+			if (t_now - t_before >= 3000)
 			{
 				clock_t _startall = clock();
 				_video.setPaused(true);
@@ -70,7 +70,7 @@ void ofApp::update(){
 				vector<cv::KeyPoint> cvkeypoint1,cvkeypoint2;
 				int num1 = 0, num2 = 0;
 
-				if(mSift.RunSIFT(1920, 1080, _image_before.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
+				if(mSift.RunSIFT(_video.getWidth(), _video.getHeight(), _image_before.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
 				{
 					num1 = mSift.GetFeatureNum();
 					keys1.resize(num1);    descriptors1.resize(128*num1);
@@ -78,7 +78,7 @@ void ofApp::update(){
 					//cvkeypoint1 = transKeyPointsFromGPUtoCV(&keys1);
 				}
 
-				if(mSift.RunSIFT(1920, 1080, _image_now.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
+				if(mSift.RunSIFT(_video.getWidth(), _video.getHeight(), _image_now.getPixels(), GL_RGB, GL_UNSIGNED_BYTE))
 				{
 					num2 = mSift.GetFeatureNum();
 					keys2.resize(num2);    descriptors2.resize(128*num2);
@@ -97,7 +97,7 @@ void ofApp::update(){
 				
 				clock_t _endmatch = clock();
 
-				cout << num_match << " sift matches were found in " << _endmatch - _startmatch << "ms;\n";		
+				cout << num_match << " sift matches were found in " << _endmatch - _startmatch << "ms;\n";
 				cout << "Cost " << _endmatch - _startall << "ms " << "in sift and match.\n\n";
 
 				CvMat* points1;
@@ -118,42 +118,42 @@ void ofApp::update(){
 					cvkeypoint2.push_back(cv::KeyPoint(key2.x, key2.y, key2.s, key2.o));
 				}
 
-				int num_fm = cvFindFundamentalMat(points1,points2,fundMatr,CV_RANSAC);
-				int num_hm = cvFindHomography(points1, points2, homoMatr);
-
-				cout<<"F-M:\n";
-				for (int i = 0; i < 9; i = i+3)
-				{
-					cout<<fundMatr->data.fl[i]
-					<<" , "<<fundMatr->data.fl[i+1]
-					<<" , "<<fundMatr->data.fl[i+2]<<endl;
-// 					if (*H[0] == NULL)
-// 					{
-// 						F[i/3][0] = fundMatr->data.fl[i];
-// 						F[i/3][1] = fundMatr->data.fl[i+1];
-// 						F[i/3][2] = fundMatr->data.fl[i+2];
-// 					}
-				}
-
-				cout<<"H-M:\n";
-				for (int i = 0; i < 9; i = i+3)
-				{
-					cout<<homoMatr->data.fl[i]
-					<<" , "<<homoMatr->data.fl[i+1]
-					<<" , "<<homoMatr->data.fl[i+2]<<endl;
-// 					if (*H[0] == NULL)
-// 					{
-// 						H[i/3][0] = homoMatr->data.fl[i];
-// 						H[i/3][1] = homoMatr->data.fl[i+1];
-// 						H[i/3][2] = homoMatr->data.fl[i+2];
-// 					}
-				}
+// 				int num_fm = cvFindFundamentalMat(points1,points2,fundMatr,CV_RANSAC);
+// 				int num_hm = cvFindHomography(points1, points2, homoMatr);
+// 
+// 				cout<<"F-M:\n";
+// 				for (int i = 0; i < 9; i = i+3)
+// 				{
+// 					cout<<fundMatr->data.fl[i]
+// 					<<" , "<<fundMatr->data.fl[i+1]
+// 					<<" , "<<fundMatr->data.fl[i+2]<<endl;
+// // 					if (*H[0] == NULL)
+// // 					{
+// // 						F[i/3][0] = fundMatr->data.fl[i];
+// // 						F[i/3][1] = fundMatr->data.fl[i+1];
+// // 						F[i/3][2] = fundMatr->data.fl[i+2];
+// // 					}
+// 				}
+// 
+// 				cout<<"H-M:\n";
+// 				for (int i = 0; i < 9; i = i+3)
+// 				{
+// 					cout<<homoMatr->data.fl[i]
+// 					<<" , "<<homoMatr->data.fl[i+1]
+// 					<<" , "<<homoMatr->data.fl[i+2]<<endl;
+// // 					if (*H[0] == NULL)
+// // 					{
+// // 						H[i/3][0] = homoMatr->data.fl[i];
+// // 						H[i/3][1] = homoMatr->data.fl[i+1];
+// // 						H[i/3][2] = homoMatr->data.fl[i+2];
+// // 					}
+// 				}
 
 				cvReleaseMat(&points1);
 				cvReleaseMat(&points2);
 				cvReleaseMat(&fundMatr);
 				cvReleaseMat(&homoMatr);
-
+				//cv::drawMatches();
 				cv::drawKeypoints((cv::Mat)_image_before.getCvImage(), cvkeypoint1, (cv::Mat)_image_draw_before.getCvImage());
 				cv::drawKeypoints((cv::Mat)_image_now.getCvImage(), cvkeypoint2, (cv::Mat)_image_draw_now.getCvImage());
 
@@ -170,18 +170,18 @@ void ofApp::update(){
 void ofApp::draw(){
 
 	glColor3f(1, 1, 1);
-	_video.draw(0, 0, _w, _h);
+	_video.draw(0, 0/*, _w, _h*/);
 
 	if (_image_draw_now.isAllocated())
 	{
-		_image_draw_now.draw(0, _h, _w, _h);
+		_image_draw_now.draw(0, _h/*, _w, _h*/);
 		glColor3f(0, 1, 1);
 		ofDrawBitmapString("now", 20, _h + 20);
 	}
 	if (_image_draw_before.isAllocated())
 	{
 		glColor3f(1, 1, 1);
-		_image_draw_before.draw(_w,0,_w,_h);
+		_image_draw_before.draw(_w,0/*,_w,_h*/);
 		glColor3f(0, 1, 1);
 		ofDrawBitmapString("before", _w + 20, 20);
 	}
