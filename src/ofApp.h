@@ -26,10 +26,11 @@ class ofApp : public ofBaseApp{
 		ofVideoPlayer _video;
 		ofVideoGrabber _grvideo;
 		ofEasyCam _cam;
-		ofImage _im;
-		ofImage _image_draw;
-		ofImage _image_now;
-		ofImage _image_before;
+		ofxCvColorImage _im;
+		ofxCvColorImage _image_draw_now;
+		ofxCvColorImage _image_draw_before;
+		ofxCvColorImage _image_now;
+		ofxCvColorImage _image_before;
 			
 		vector<cv::KeyPoint> keypoints_now;
 		vector<cv::KeyPoint> keypoints_before;
@@ -42,4 +43,7 @@ class ofApp : public ofBaseApp{
 
 		SiftGPU mSift;
 		SiftMatchGPU mSiftMatcher;
+
+		float F[3][3];
+		float H[3][3];
 };
