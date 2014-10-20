@@ -37,18 +37,19 @@ void ofApp::update(){
 	_video.update();
 	if (_video.isPlaying())
 	{
-		if (_video.isFrameNew())
-		{
-			_im.setFromPixels(_video.getPixelsRef());
-		}
+// 		if (_video.isFrameNew())
+// 		{
+// 			//_im.setFromPixels(_video.getPixelsRef());
+// 		}
 		t_now = clock();
 		if (t_now - t_before >= 5000)
 		{
 			clock_t _start = clock();
 			_video.setPaused(true);
+
 			_image_before = _image_now;
 			_image_now.setFromPixels(_video.getPixelsRef());
-			_image_draw = _image_now;
+			//_image_draw = _image_now;
 
 			glfwMakeContextCurrent(sift_window);
 			vector<float > descriptors1(1), descriptors2(1);
@@ -81,6 +82,7 @@ void ofApp::update(){
 			cout << _end - _start << "ms;\n";
 			glfwMakeContextCurrent(draw_window);
 			t_before = clock();
+			
 			_video.setPaused(false);
 		}
 	}
@@ -90,11 +92,11 @@ void ofApp::update(){
 void ofApp::draw(){
 
 	glColor3f(1,1,1);
-	_im.draw(0,0,_w,_h);
+	_video.draw(0,0,_w,_h);
 
 	if (_image_before.isAllocated())
 	{
-		_image_draw.draw(0,_h,_w,_h);
+		_image_before.draw(0,_h,_w,_h);
 	}
 	if (_image_now.isAllocated())
 	{
